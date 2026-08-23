@@ -15,6 +15,7 @@ package main
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -120,6 +121,10 @@ common flags (all subcommands):
 
 // ---------------------------------------------------------------- subcommands
 
+// cmdRegister performs the two-step commit-reveal registration (UC-1): commit
+// to a hash of the name (so it stays secret) and, once MIN_COMMITMENT_AGE has
+// elapsed, reveal it via register(). This is what stops a name from being
+// front-run out of the mempool — see NamespaceDApp.sol's commit()/register().
 func cmdRegister(args []string) {
 	fs := flag.NewFlagSet("register", flag.ExitOnError)
 	co := addCommon(fs)
@@ -130,11 +135,27 @@ func cmdRegister(args []string) {
 	pubKey := crypto.FromECDSAPub(&c.key.PublicKey) // 65-byte uncompressed
 	price, err := c.dapp.PriceOf(callOpts(), name)
 	fatal(err)
-	fmt.Printf("registering %q for %s (fee %s wei)\n", name, c.from.Hex(), price)
 
+	var secret [32]byte
+	if _, err := rand.Read(secret[:]); err != nil {
+		fatal(err)
+	}
+	commitment, err := c.dapp.MakeCommitment(callOpts(), name, c.from, pubKey, secret)
+	fatal(err)
+	send(c, "commit", func(o *bind.TransactOpts) (*types.Transaction, error) {
+		return c.dapp.Commit(o, commitment)
+	})
+
+	minAge, err := c.dapp.MINCOMMITMENTAGE(callOpts())
+	fatal(err)
+	wait := time.Duration(minAge.Int64())*time.Second + time.Second // safety margin
+	fmt.Printf("waiting %s for the commitment to mature before revealing...\n", wait)
+	time.Sleep(wait)
+
+	fmt.Printf("registering %q for %s (fee %s wei)\n", name, c.from.Hex(), price)
 	c.auth.Value = price
 	send(c, "register", func(o *bind.TransactOpts) (*types.Transaction, error) {
-		return c.dapp.Register(o, name, pubKey)
+		return c.dapp.Register(o, name, pubKey, secret)
 	})
 	fmt.Printf("registered %q -> owner %s, pubKey %s\n", name, c.from.Hex(), hexPub(pubKey))
 }

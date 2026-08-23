@@ -272,7 +272,7 @@ private key never leaves the machine and is never sent to a resolver. Contract a
 are read from `--deployments` (default `contracts/deployments/localhost.json`).
 
 ```bash
-ddns register example                                    # register a name (pays the on-chain fee)
+ddns register example                                    # commit, wait ~30s, then reveal (pays the on-chain fee)
 ddns set example A address=93.184.216.34                 # sign + store an A record (ttl 3600 default)
 ddns set example SVC --selector "service=SMTP&transport=TCP&port=25" \
     target=mail.example service=SMTP transport=TCP port=25
@@ -349,6 +349,11 @@ ddns-fetch example --selector service=HTTP -o site.html   # fetch + verify to di
   the record's on-chain MiMC commitment, verifiable on-chain via `ZKVerifier`.
 - **Sybil resistance.** Because clients verify on-chain signatures and never trust a
   single resolver, running many fake resolvers gains an attacker nothing.
+- **Registration front-running resistance.** `ddns register` uses commit-reveal
+  (mirroring ENS): it commits to a salted hash of the name, waits out
+  `MIN_COMMITMENT_AGE`, then reveals via `register()`. Nobody who observes the reveal
+  transaction in the mempool can front-run it — they'd need the secret salt, which
+  only the committer holds.
 - **Per-site browser isolation.** `/web/<name>` and `/resource` responses carry a
   `Content-Security-Policy: sandbox` header (no `allow-same-origin`), so every
   decentralized site gets its own opaque browser origin instead of sharing the

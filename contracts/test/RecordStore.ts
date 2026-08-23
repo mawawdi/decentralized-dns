@@ -1,6 +1,7 @@
 import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import { ethers } from "hardhat"
+import { commitAndRegister } from "./helpers"
 
 const BASE_PRICE = ethers.parseEther("0.01")
 const YEAR = 365n * 24n * 60n * 60n
@@ -16,7 +17,7 @@ describe("RecordSchemaRegistry + record store", () => {
 		const dapp = await (
 			await ethers.getContractFactory("NamespaceDApp")
 		).deploy(BASE_PRICE, await registry.getAddress())
-		await dapp.connect(alice).register("example", PUBKEY, { value: BASE_PRICE })
+		await commitAndRegister(dapp, alice, "example", PUBKEY, BASE_PRICE)
 		return { dapp, registry, treasurer, alice, bob }
 	}
 
@@ -190,7 +191,7 @@ describe("RecordSchemaRegistry + record store", () => {
 			await time.increase(YEAR + 1n)
 			expect((await dapp.lookup("example", "A", "")).exists).to.equal(false)
 
-			await dapp.connect(bob).register("example", PUBKEY2, { value: BASE_PRICE })
+			await commitAndRegister(dapp, bob, "example", PUBKEY2, BASE_PRICE)
 			// bob's fresh domain: alice's record must be invisible
 			expect((await dapp.lookup("example", "A", "")).exists).to.equal(false)
 			expect(await dapp.listRecords("example")).to.have.length(0)

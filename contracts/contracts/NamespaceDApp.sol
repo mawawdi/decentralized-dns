@@ -21,6 +21,20 @@ contract NamespaceDApp {
     /// @notice Registration / renewal period.
     uint256 public constant REGISTRATION_PERIOD = 365 days;
 
+    /// @notice Minimum delay between commit() and the register() that reveals
+    ///         it (UC-1 front-running defense, mirrors ENS's commit-reveal).
+    ///         register() only accepts a commitment made at least this long
+    ///         ago, so nobody who observes a register() transaction in the
+    ///         mempool — which reveals the plaintext name — can also produce
+    ///         and reveal a matching commitment of their own inside the same
+    ///         block: they would have needed to commit to it in advance.
+    uint256 public constant MIN_COMMITMENT_AGE = 30 seconds;
+
+    /// @notice Commitments older than this are no longer usable, so a stale,
+    ///         forgotten commitment cannot be replayed far in the future
+    ///         (and does not linger in storage indefinitely).
+    uint256 public constant MAX_COMMITMENT_AGE = 1 days;
+
     /// @notice Base yearly fee in wei for names of 5+ characters.
     ///         Shorter names cost more: 1 char x16, 2 x8, 3 x4, 4 x2.
     uint256 public immutable basePrice;
@@ -66,6 +80,10 @@ contract NamespaceDApp {
     // nameHash => generation => recordKey => index+1 into _recordKeys[..][generation] (0 = absent)
     mapping(bytes32 => mapping(uint64 => mapping(bytes32 => uint256))) private _recordKeyIndex;
 
+    /// @notice commitment hash => block.timestamp it was made at (0 = unused/none).
+    mapping(bytes32 => uint256) public commitments;
+
+    event Committed(bytes32 indexed commitment, uint256 timestamp);
     event Registered(
         bytes32 indexed nameHash,
         string name,
@@ -119,6 +137,9 @@ contract NamespaceDApp {
     error SelectorTooLong();
     error InvalidTTL();
     error RecordNotFound();
+    error CommitmentNotFound();
+    error CommitmentTooNew();
+    error CommitmentTooOld();
 
     constructor(uint256 _basePrice, IRecordSchemaRegistry _registry) {
         basePrice = _basePrice;
@@ -168,13 +189,51 @@ contract NamespaceDApp {
 
     // ------------------------------------------------------------- mutations
 
+    /// @notice Commitment hash for a future register() call, binding the
+    ///         name, the intended owner, the pubKey they'll register with,
+    ///         and a caller-chosen secret salt. Only whoever knows `secret`
+    ///         can later produce a matching register() call, so publishing
+    ///         the commitment on-chain (which anyone can see) reveals nothing
+    ///         about which name is being registered.
+    function makeCommitment(
+        string calldata name,
+        address owner,
+        bytes calldata pubKey,
+        bytes32 secret
+    ) public pure returns (bytes32) {
+        return keccak256(abi.encode(name, owner, pubKey, secret));
+    }
+
+    /// @notice Commit to a future registration (UC-1 step 1 of 2). Anyone may
+    ///         commit anything; the hash only becomes useful once register()
+    ///         reveals a matching preimage at least MIN_COMMITMENT_AGE later.
+    function commit(bytes32 commitment) external {
+        commitments[commitment] = block.timestamp;
+        emit Committed(commitment, block.timestamp);
+    }
+
     /// @notice Register (or re-register an expired) `name`, paying the fee.
+    ///         Requires a prior commit() of `makeCommitment(name, msg.sender,
+    ///         pubKey, secret)` made between MIN_COMMITMENT_AGE and
+    ///         MAX_COMMITMENT_AGE ago (UC-1 step 2 of 2) — see commit().
     /// @param name   the domain name: 1-63 chars of [a-z0-9-], no edge hyphen
     /// @param pubKey the owner's public key used by resolvers/clients to
     ///               verify record signatures (kept off-chain by the owner)
-    function register(string calldata name, bytes calldata pubKey) external payable {
+    /// @param secret the salt used in the matching commit(); discard after use
+    function register(
+        string calldata name,
+        bytes calldata pubKey,
+        bytes32 secret
+    ) external payable {
         _validateName(bytes(name));
         if (pubKey.length == 0 || pubKey.length > 128) revert InvalidPubKey();
+
+        bytes32 commitment = makeCommitment(name, msg.sender, pubKey, secret);
+        uint256 committedAt = commitments[commitment];
+        if (committedAt == 0) revert CommitmentNotFound();
+        if (block.timestamp < committedAt + MIN_COMMITMENT_AGE) revert CommitmentTooNew();
+        if (block.timestamp > committedAt + MAX_COMMITMENT_AGE) revert CommitmentTooOld();
+        delete commitments[commitment];
 
         bytes32 h = keccak256(bytes(name));
         Domain storage d = _domains[h];

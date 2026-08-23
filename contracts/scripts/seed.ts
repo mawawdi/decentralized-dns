@@ -1,3 +1,4 @@
+import { time } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { ethers, network } from "hardhat"
 import { execFileSync } from "child_process"
 import * as fs from "fs"
@@ -42,7 +43,16 @@ async function main() {
 	const price = await dapp.priceOf("example")
 	// alice's uncompressed secp256k1 public key as the on-chain pubKey
 	const pubKey = ethers.SigningKey.computePublicKey(ALICE_PK, false)
-	await (await dapp.connect(alice).register("example", pubKey, { value: price })).wait()
+
+	// Commit-reveal registration (UC-1 front-running defense): commit to a
+	// hash of the name first, then reveal via register() once
+	// MIN_COMMITMENT_AGE has elapsed. time.increase() fast-forwards the local
+	// chain's clock instead of sleeping in real time.
+	const secret = ethers.hexlify(ethers.randomBytes(32))
+	const commitment = await dapp.makeCommitment("example", alice.address, pubKey, secret)
+	await (await dapp.connect(alice).commit(commitment)).wait()
+	await time.increase(await dapp.MIN_COMMITMENT_AGE())
+	await (await dapp.connect(alice).register("example", pubKey, secret, { value: price })).wait()
 	console.log("registered 'example' for", alice.address)
 
 	// Records are signed under (and resolve only at) the domain's current
