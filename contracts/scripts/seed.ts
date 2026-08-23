@@ -25,11 +25,16 @@ function commitmentOf(
 	fieldNames: string[],
 	fieldValues: string[],
 ): string {
-	const out = execFileSync("go", ["run", "./cmd/record-commit"], {
-		cwd: path.join(__dirname, "..", "..", "resolver"),
-		input: JSON.stringify({ name, type, selector, ttl, generation: Number(generation), fieldNames, fieldValues }),
-	})
-	return out.toString().trim()
+	const input = JSON.stringify({ name, type, selector, ttl, generation: Number(generation), fieldNames, fieldValues })
+	try {
+		return execFileSync("record-commit", [], { input }).toString().trim()
+	} catch {
+		const out = execFileSync("go", ["run", "./cmd/record-commit"], {
+			cwd: path.join(__dirname, "..", "..", "resolver"),
+			input,
+		})
+		return out.toString().trim()
+	}
 }
 
 async function main() {

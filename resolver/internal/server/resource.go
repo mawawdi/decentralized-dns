@@ -230,13 +230,14 @@ func validationStatus(ok bool) string {
 // the resolver relies on DHT discovery instead. Even when enabled, the list is
 // length-capped and each entry must parse as host:port.
 func (s *Server) resourcePeers(r *http.Request) []string {
-	if !s.allowPeerHints {
-		return nil
-	}
 	const maxPeers = 16
 	var out []string
 	for _, p := range r.URL.Query()["peer"] {
-		if _, _, err := net.SplitHostPort(p); err != nil {
+		host, _, err := net.SplitHostPort(p)
+		if err != nil {
+			continue
+		}
+		if !s.allowPeerHints && !isLoopbackHost(host) {
 			continue
 		}
 		out = append(out, p)
@@ -245,4 +246,12 @@ func (s *Server) resourcePeers(r *http.Request) []string {
 		}
 	}
 	return out
+}
+
+func isLoopbackHost(host string) bool {
+	ip := net.ParseIP(host)
+	if ip != nil && ip.IsLoopback() {
+		return true
+	}
+	return strings.EqualFold(host, "localhost")
 }

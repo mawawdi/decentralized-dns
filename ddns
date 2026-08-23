@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+#
+# Unified DDNS CLI — Simple, zero-config interface for Decentralized DNS.
+#
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN_DIR="$ROOT/resolver/bin"
+
+# 1. Auto-build binaries if missing
+if [[ ! -f "$BIN_DIR/ddns" || ! -f "$BIN_DIR/ddns-lookup" || ! -f "$BIN_DIR/resolver" ]]; then
+  echo "Building DDNS binaries..."
+  ( cd "$ROOT/resolver" && go build -buildvcs=false -o bin/ ./... )
+fi
+
+# 2. Extract network flags
+NETWORK="${DDNS_NETWORK:-}"
+ARGS=()
+for arg in "$@"; do
+  if [[ "$arg" == "--sepolia" ]]; then
+    NETWORK="sepolia"
+  elif [[ "$arg" == "--local" || "$arg" == "--localhost" ]]; then
+    NETWORK="localhost"
+  else
+    ARGS+=("$arg")
+  fi
+done
+set -- "${ARGS[@]:-}"
+
+# Load contracts/.env if present
+if [[ -f "$ROOT/contracts/.env" ]]; then
+  while IFS='=' read -r key val || [[ -n "$key" ]]; do
+    [[ "$key" =~ ^#.* || -z "$key" ]] && continue
+    key="$(echo "$key" | xargs)"
+    val="$(echo "$val" | xargs | tr -d "'\"")"
+    if [[ -n "$key" && -z "${!key:-}" ]]; then
+      export "$key=$val"
+    fi
+  done < "$ROOT/contracts/.env"
+fi
+
+# Auto-detect network if not explicitly set
+if [[ -z "$NETWORK" ]]; then
+  if curl -fsS -X POST "http://127.0.0.1:8545" -H 'content-type: application/json' --data '{"jsonrpc":"2.0","id":1,"method":"eth_chainId"}' >/dev/null 2>&1; then
+    NETWORK="localhost"
+  elif [[ -f "$ROOT/contracts/deployments/sepolia.json" && -n "${SEPOLIA_PRIVATE_KEY:-}" ]]; then
+    NETWORK="sepolia"
+  else
+    NETWORK="localhost"
+  fi
+fi
+
+if [[ "$NETWORK" == "sepolia" ]]; then
+  export DDNS_PRIVATE_KEY="${DDNS_PRIVATE_KEY:-${SEPOLIA_PRIVATE_KEY:-}}"
+  export DDNS_DEPLOYMENTS="${DDNS_DEPLOYMENTS:-$ROOT/contracts/deployments/sepolia.json}"
+  export RPC_URL="${RPC_URL:-${SEPOLIA_RPC_URL:-https://ethereum-sepolia-rpc.publicnode.com}}"
+else
+  export DDNS_PRIVATE_KEY="${DDNS_PRIVATE_KEY:-0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d}"
+  export DDNS_DEPLOYMENTS="${DDNS_DEPLOYMENTS:-$ROOT/contracts/deployments/localhost.json}"
+  export RPC_URL="${RPC_URL:-http://127.0.0.1:8545}"
+fi
+
+export PATH="$BIN_DIR:$PATH"
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+  start|demo|presentation)
+    exec "$ROOT/scripts/presentation.sh" "$@"
+    ;;
+  dashboard|admin)
+    echo "Opening Resolver Admin Dashboard..."
+    open "http://localhost:8080/admin" 2>/dev/null || echo "Open http://localhost:8080/admin in your browser"
+    ;;
+  web|open|site)
+    NAME="${1:-example}"
+    echo "Opening http://localhost:8080/web/$NAME..."
+    open "http://localhost:8080/web/$NAME" 2>/dev/null || echo "Open http://localhost:8080/web/$NAME in your browser"
+    ;;
+  lookup)
+    NAME="${1:-example}"
+    TYPE="${2:-A}"
+    exec "$BIN_DIR/ddns-lookup" "$NAME" "$TYPE"
+    ;;
+  set)
+    if [[ $# -lt 2 ]]; then
+      echo "Usage: ./ddns set <name> <type> [key=value... or IP]"
+      exit 1
+    fi
+    NAME="$1"
+    TYPE="$2"
+    shift 2
+    ARGS=()
+    for arg in "$@"; do
+      # Convenience: if setting an A record with raw IP (e.g. 1.2.3.4), auto-convert to address=1.2.3.4
+      if [[ "$TYPE" == "A" && "$arg" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        ARGS+=("address=$arg")
+      else
+        ARGS+=("$arg")
+      fi
+    done
+    exec "$BIN_DIR/ddns" set "$NAME" "$TYPE" "${ARGS[@]}"
+    ;;
+  register|remove|transfer|renew|declare-type|publish-resource|announce-resolver|resolvers|channel-open|voucher|channel-claim|channel-close|withdraw)
+    exec "$BIN_DIR/ddns" "$cmd" "$@"
+    ;;
+  help|-h|--help)
+    cat << EOF
+Decentralized DNS (ddns) — Unified CLI
+
+Commands:
+  ./ddns start                   Launch the full live presentation demo (Chain + Resolver + Web)
+  ./ddns register <name>         Register a domain name on-chain (commit + reveal)
+  ./ddns set <name> A <ip>       Add an A record pointing to an IP address
+  ./ddns lookup <name> [type]    Query the resolver and verify cryptographic proofs
+  ./ddns dashboard               Open the resolver web admin console in your browser
+  ./ddns open [name]             Open the decentralized website gateway in your browser
+  ./ddns resolvers               List all public resolvers registered on-chain
+
+Network:
+  Automatically uses Sepolia if 'contracts/.env' contains SEPOLIA_PRIVATE_KEY.
+  Otherwise defaults to local network.
+EOF
+    ;;
+  *)
+    exec "$BIN_DIR/ddns" "$cmd" "$@"
+    ;;
+esac

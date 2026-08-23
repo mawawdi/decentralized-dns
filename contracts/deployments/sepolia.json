@@ -1,0 +1,13 @@
+{
+  "network": "sepolia",
+  "chainId": "11155111",
+  "deployer": "0xaB846B719aEf25631DB5A461006d9CCF20736294",
+  "contracts": {
+    "RecordSchemaRegistry": "0xf441a0eA801dEa51B2fCcb1bC13cdD162d83E69a",
+    "NamespaceDApp": "0xF50Fc979EE94bDd3819985838cceb20bF551A357",
+    "ZKVerifier": "0xCBCAD930c43141ebF4a7D936F65974771E0ff584",
+    "ResolverRegistry": "0x0a1fc76b50220044e05cB0bE941387D7f93e20BB",
+    "ResolverIncentives": "0x9d991cEa121932ffCe7F9BDf56c6C8E75AFe55bd"
+  },
+  "timestamp": "2026-08-23T16:17:00.449Z"
+}

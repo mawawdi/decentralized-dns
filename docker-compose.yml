@@ -28,7 +28,9 @@ services:
   # One-shot: deploy + seed the contracts against the chain, writing the
   # addresses to the shared `deployments` volume the resolver reads.
   deployer:
-    image: node:22-bookworm-slim
+    build:
+      context: .
+      dockerfile: Dockerfile.deployer
     working_dir: /app
     depends_on:
       chain:
@@ -37,6 +39,7 @@ services:
       RPC_URL: http://chain:8545
     volumes:
       - ./contracts:/app
+      - ./resolver:/resolver
       - deployments:/app/deployments
     command: >
       sh -c "npm install &&
@@ -61,7 +64,7 @@ services:
       - deployments:/deployments:ro
     ports:
       - "8080:8080"
-      - "5353:5353/udp"
+      - "5354:5353/udp"
 
 volumes:
   deployments:

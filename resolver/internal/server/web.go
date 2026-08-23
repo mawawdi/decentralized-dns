@@ -22,24 +22,35 @@ import (
 func (s *Server) handleWeb(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
 	selector := r.URL.Query().Get("selector")
-	if selector == "" {
-		selector = "service=HTTP" // the conventional selector for a website
-	}
-	pairs, err := query.ParsePairs(selector)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid_query", err.Error())
-		return
-	}
-	q, err := query.New(name, "ResourceRef", pairs)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid_query", err.Error())
-		return
+	selectorsToTry := []string{"service=HTTP", ""}
+	if selector != "" {
+		selectorsToTry = []string{selector}
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), resourceFetchTimeout)
 	defer cancel()
 
-	vr, rerr := s.fetchVerifiedResource(ctx, q, nil)
+	var vr *verifiedResource
+	var rerr *resourceError
+
+	for _, sel := range selectorsToTry {
+		pairs, err := query.ParsePairs(sel)
+		if err != nil {
+			continue
+		}
+		q, err := query.New(name, "ResourceRef", pairs)
+		if err != nil {
+			continue
+		}
+		vr, rerr = s.fetchVerifiedResource(ctx, q, s.resourcePeers(r))
+		if rerr == nil {
+			break
+		}
+		if rerr.code != "no_match" {
+			break
+		}
+	}
+
 	if rerr != nil {
 		writeError(w, rerr.status, rerr.code, rerr.msg)
 		return

@@ -1,5 +1,19 @@
 import { HardhatUserConfig } from "hardhat/config"
 import "@nomicfoundation/hardhat-toolbox"
+import * as fs from "fs"
+import * as path from "path"
+
+const envPath = path.join(__dirname, ".env")
+if (fs.existsSync(envPath)) {
+	for (const line of fs.readFileSync(envPath, "utf8").split("\n")) {
+		const trimmed = line.trim()
+		if (!trimmed || trimmed.startsWith("#")) continue
+		const [k, ...v] = trimmed.replace(/^export\s+/, "").split("=")
+		if (k && !process.env[k.trim()]) {
+			process.env[k.trim()] = v.join("=").trim().replace(/^["']|["']$/g, "")
+		}
+	}
+}
 
 const config: HardhatUserConfig = {
 	solidity: {

@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1
+FROM golang:1.25 AS go-bin
+WORKDIR /src
+COPY resolver/go.mod resolver/go.sum ./
+RUN go mod download
+COPY resolver/ ./
+RUN CGO_ENABLED=0 GOOS=linux go build -o /usr/local/bin/record-commit ./cmd/record-commit
+RUN go build ./cmd/record-commit
+
+FROM node:22-bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git && rm -rf /var/lib/apt/lists/*
+COPY --from=go-bin /usr/local/go /usr/local/go
+COPY --from=go-bin /go/pkg/mod /go/pkg/mod
+COPY --from=go-bin /root/.cache/go-build /root/.cache/go-build
+COPY --from=go-bin /usr/local/bin/record-commit /usr/local/bin/record-commit
+ENV GOPATH=/go
+ENV PATH="/usr/local/go/bin:${PATH}"
+
+WORKDIR /app

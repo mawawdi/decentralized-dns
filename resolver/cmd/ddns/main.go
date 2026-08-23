@@ -148,9 +148,13 @@ func cmdRegister(args []string) {
 
 	minAge, err := c.dapp.MINCOMMITMENTAGE(callOpts())
 	fatal(err)
-	wait := time.Duration(minAge.Int64())*time.Second + time.Second // safety margin
-	fmt.Printf("waiting %s for the commitment to mature before revealing...\n", wait)
-	time.Sleep(wait)
+	waitSecs := int(minAge.Int64()) + 15
+	fmt.Printf("waiting %ds for the commit-reveal window (front-running defense)...\n", waitSecs)
+	for rem := waitSecs; rem > 0; rem-- {
+		fmt.Printf("\rrevealing in %ds... ", rem)
+		time.Sleep(1 * time.Second)
+	}
+	fmt.Printf("\rrevealing now!                                  \n")
 
 	fmt.Printf("registering %q for %s (fee %s wei)\n", name, c.from.Hex(), price)
 	c.auth.Value = price
@@ -315,7 +319,26 @@ func cmdPublishResource(args []string) {
 	if *anchorOnly {
 		return
 	}
-	fmt.Printf("seeding on %v\n", engine.ListenAddrs())
+	addrs := engine.ListenAddrs()
+	fmt.Printf("seeding on %v\n", addrs)
+
+	// Sync and cache with local resolver so it's immediately available to browsers
+	resolverBase := os.Getenv("DDNS_RESOLVER")
+	if resolverBase == "" {
+		resolverBase = "http://127.0.0.1:8080"
+	}
+	if len(addrs) > 0 {
+		u := fmt.Sprintf("%s/resource?name=%s&selector=%s&peer=%s",
+			strings.TrimRight(resolverBase, "/"), name, sel, addrs[0])
+		client := &http.Client{Timeout: 5 * time.Second}
+		if resp, err := client.Get(u); err == nil {
+			_ = resp.Body.Close()
+			if resp.StatusCode == http.StatusOK {
+				fmt.Println("✓ synced and verified with resolver — cached and ready for instant web browsing!")
+			}
+		}
+	}
+
 	if *seconds > 0 {
 		fmt.Printf("seeding for %ds...\n", *seconds)
 		time.Sleep(time.Duration(*seconds) * time.Second)

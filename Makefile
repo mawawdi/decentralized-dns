@@ -1,6 +1,6 @@
 .PHONY: all build test clean contracts-install contracts-build contracts-test \
         resolver-build resolver-test deploy-localhost seed-localhost chain \
-        bindings zk-setup demo fmt race cover
+        bindings zk-setup demo presentation fmt race cover
 
 all: build
 
@@ -23,6 +23,9 @@ chain:
 deploy-localhost:
 	cd contracts && npx hardhat run scripts/deploy.ts --network localhost
 
+deploy-sepolia:
+	cd contracts && npx hardhat run scripts/deploy.ts --network sepolia
+
 seed-localhost:
 	cd contracts && npx hardhat run scripts/seed.ts --network localhost
 
@@ -38,8 +41,21 @@ zk-setup:
 demo:
 	./scripts/demo.sh
 
+# 1-click live presentation launcher (keeps running with dashboard + site + extension).
+start:
+	./ddns start
+
+presentation:
+	./ddns start
+
+dashboard:
+	./ddns dashboard
+
+site:
+	./ddns open example
+
 resolver-build:
-	cd resolver && go build -o bin/ ./...
+	cd resolver && go build -buildvcs=false -o bin/ ./...
 
 resolver-test:
 	cd resolver && go vet ./... && go test ./...

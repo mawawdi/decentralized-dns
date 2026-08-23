@@ -23,11 +23,17 @@ resolver/data/
 
 # Local env & secrets
 .env
+**/.env
+contracts/.env
+resolver/.env
 *.key
 keystore/
+site.html
 
 # Editor
 .vscode/
 .idea/
 
 HANDBOOK.*
+
+.presentation-data/
