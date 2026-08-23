@@ -199,4 +199,31 @@ describe("NamespaceDApp", () => {
 			expect(await ethers.provider.getBalance(dapp.target)).to.equal(0n)
 		})
 	})
+
+	describe("record key housekeeping (generation-scoped, anti-griefing)", () => {
+		it("a departing owner's records never appear for, or slow down, the next owner", async () => {
+			const { dapp, alice, bob } = await loadFixture(deployFixture)
+			await dapp.connect(alice).register("example", PUBKEY, { value: BASE_PRICE })
+
+			// Alice writes several distinct records under different selectors —
+			// the pattern a departing owner could otherwise use to permanently
+			// bloat listRecords() for whoever registers the name next.
+			for (let i = 0; i < 5; i++) {
+				await dapp
+					.connect(alice)
+					.setRecord("example", "A", `sel${i}`, ["address"], ["1.2.3.4"], 3600, "0x", ethers.ZeroHash)
+			}
+			expect(await dapp.listRecords("example")).to.have.length(5)
+
+			await dapp.connect(alice).transfer("example", bob.address, PUBKEY2)
+			// Bob's new generation starts with an empty key list — none of
+			// alice's five records carry over.
+			expect(await dapp.listRecords("example")).to.have.length(0)
+
+			await dapp.connect(bob).setRecord("example", "A", "", ["address"], ["5.6.7.8"], 3600, "0x", ethers.ZeroHash)
+			// Exactly bob's one record, not six: proves the previous
+			// generation's keys were never iterated, not merely filtered out.
+			expect(await dapp.listRecords("example")).to.have.length(1)
+		})
+	})
 })

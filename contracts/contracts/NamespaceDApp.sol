@@ -55,10 +55,16 @@ contract NamespaceDApp {
 
     // nameHash => recordKey => Record
     mapping(bytes32 => mapping(bytes32 => Record)) private _records;
-    // nameHash => list of record keys ever written (deduplicated)
-    mapping(bytes32 => bytes32[]) private _recordKeys;
-    // nameHash => recordKey => index+1 into _recordKeys (0 = absent)
-    mapping(bytes32 => mapping(bytes32 => uint256)) private _recordKeyIndex;
+    // nameHash => generation => list of record keys written in that generation
+    // (deduplicated). Scoped by generation — not just nameHash — so a
+    // departing owner cannot grief a name: transfer/re-registration bumps the
+    // generation and the new owner starts from a fresh, empty key list rather
+    // than inheriting (and paying to iterate over, in listRecords) every
+    // selector the previous owner ever wrote. The abandoned old-generation
+    // array simply stops being referenced.
+    mapping(bytes32 => mapping(uint64 => bytes32[])) private _recordKeys;
+    // nameHash => generation => recordKey => index+1 into _recordKeys[..][generation] (0 = absent)
+    mapping(bytes32 => mapping(uint64 => mapping(bytes32 => uint256))) private _recordKeyIndex;
 
     event Registered(
         bytes32 indexed nameHash,
@@ -338,9 +344,9 @@ contract NamespaceDApp {
         r.commitment = commitment;
         r.exists = true;
 
-        if (_recordKeyIndex[h][key] == 0) {
-            _recordKeys[h].push(key);
-            _recordKeyIndex[h][key] = _recordKeys[h].length; // index + 1
+        if (_recordKeyIndex[h][d.generation][key] == 0) {
+            _recordKeys[h][d.generation].push(key);
+            _recordKeyIndex[h][d.generation][key] = _recordKeys[h][d.generation].length; // index + 1
         }
 
         emit RecordSet(h, name, key, recordType, selector, ttl);
@@ -363,16 +369,16 @@ contract NamespaceDApp {
         if (!r.exists || r.generation != d.generation) revert RecordNotFound();
 
         delete _records[h][key];
-        uint256 idxPlus1 = _recordKeyIndex[h][key];
-        bytes32[] storage keys = _recordKeys[h];
+        uint256 idxPlus1 = _recordKeyIndex[h][d.generation][key];
+        bytes32[] storage keys = _recordKeys[h][d.generation];
         uint256 lastIdx = keys.length - 1;
         if (idxPlus1 - 1 != lastIdx) {
             bytes32 moved = keys[lastIdx];
             keys[idxPlus1 - 1] = moved;
-            _recordKeyIndex[h][moved] = idxPlus1;
+            _recordKeyIndex[h][d.generation][moved] = idxPlus1;
         }
         keys.pop();
-        delete _recordKeyIndex[h][key];
+        delete _recordKeyIndex[h][d.generation][key];
 
         emit RecordRemoved(h, name, key, recordType, selector);
     }
@@ -417,7 +423,10 @@ contract NamespaceDApp {
     }
 
     /// @notice All live records of an active domain (current generation).
-    ///         View-only enumeration; loops are off-chain gas-free.
+    ///         View-only enumeration; loops are off-chain gas-free. The key
+    ///         list is scoped to the current generation, so a previous
+    ///         owner's records (however many selectors they wrote) can never
+    ///         inflate this loop for the current owner.
     function listRecords(
         string calldata name
     ) external view returns (Record[] memory out) {
@@ -426,7 +435,7 @@ contract NamespaceDApp {
         if (d.owner == address(0) || block.timestamp > d.expiry) {
             return new Record[](0);
         }
-        bytes32[] storage keys = _recordKeys[h];
+        bytes32[] storage keys = _recordKeys[h][d.generation];
         uint256 live = 0;
         for (uint256 i = 0; i < keys.length; i++) {
             Record storage r = _records[h][keys[i]];
