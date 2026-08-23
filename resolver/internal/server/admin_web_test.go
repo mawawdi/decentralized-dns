@@ -79,6 +79,15 @@ func TestWebGatewayServesVerifiedSite(t *testing.T) {
 	if w.Header().Get("X-DDNS-Content-Validation") != "ok" {
 		t.Errorf("validation header = %q", w.Header().Get("X-DDNS-Content-Validation"))
 	}
+	// Served sites must be sandboxed into their own opaque origin so one
+	// decentralized name can never reach into another's storage/cookies via
+	// the resolver's shared real origin (see webSandboxCSP).
+	if csp := w.Header().Get("Content-Security-Policy"); csp != webSandboxCSP {
+		t.Errorf("CSP = %q, want %q", csp, webSandboxCSP)
+	}
+	if strings.Contains(w.Header().Get("Content-Security-Policy"), "allow-same-origin") {
+		t.Error("CSP must not grant allow-same-origin: that would defeat the per-site sandbox")
+	}
 }
 
 func TestResourceContentTypeMismatchFlagged(t *testing.T) {
@@ -105,5 +114,22 @@ func TestResourceContentTypeMismatchFlagged(t *testing.T) {
 	}
 	if !strings.Contains(w.Body.String(), "content_type_mismatch") {
 		t.Errorf("missing error code: %s", w.Body.String())
+	}
+}
+
+func TestResourceEndpointSandboxed(t *testing.T) {
+	fc := seededFake(t)
+	s := newTestServer(t, fc, 100, 100)
+	s.resource = &fakeResourceFetcher{body: []byte("hello")}
+
+	w := rawGet(t, s, "/resource?name=example")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d: %s", w.Code, w.Body.String())
+	}
+	// A browser pointed directly at /resource must get the same opaque-origin
+	// sandbox as /web — a mismatched or missing declared content type is not
+	// the only way owner-controlled bytes reach a browser under this origin.
+	if csp := w.Header().Get("Content-Security-Policy"); csp != webSandboxCSP {
+		t.Errorf("CSP = %q, want %q", csp, webSandboxCSP)
 	}
 }

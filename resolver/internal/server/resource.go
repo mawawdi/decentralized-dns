@@ -19,6 +19,21 @@ import (
 
 const resourceFetchTimeout = 60 * time.Second
 
+// webSandboxCSP is applied to every response that carries owner-controlled
+// bytes onto the browser (/web and /resource). Without it, every
+// decentralized "site" resolved through this resolver would render under one
+// real origin — the resolver's own scheme+host+port — since /web/<name> is
+// just a path, not a distinct hostname the way real DNS gives each domain its
+// own origin. A malicious owner's script would then share that origin with
+// every *other* name resolved through the same resolver: able to read/write
+// their localStorage, IndexedDB and cookies, or register a service worker
+// that hijacks future requests to any /web/* path. The CSP `sandbox`
+// directive (with neither allow-same-origin nor allow-top-navigation) forces
+// each response into a fresh, opaque origin instead — browsers honour it even
+// for a top-level navigation, not just an iframe — while allow-scripts and
+// allow-forms keep the served site itself fully interactive.
+const webSandboxCSP = "sandbox allow-scripts allow-forms; base-uri 'none'"
+
 // ResourceFetcher is the torrent fetch API needed by the REST resource flow.
 type ResourceFetcher interface {
 	Fetch(ctx context.Context, infoHashHex, expectedSHAHex string, peers []string) ([]byte, error)
@@ -179,6 +194,7 @@ func (s *Server) handleResource(w http.ResponseWriter, r *http.Request) {
 	h := w.Header()
 	h.Set("Content-Type", vr.contentType)
 	h.Set("X-Content-Type-Options", "nosniff") // honour the owner-declared type exactly
+	h.Set("Content-Security-Policy", webSandboxCSP)
 	h.Set("X-DDNS-Resolver", s.identity.PublicKeyHex())
 	h.Set("X-DDNS-Sig-Scheme", "ddns-resource-v1")
 	h.Set("X-DDNS-Signature", sig)

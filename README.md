@@ -349,6 +349,11 @@ ddns-fetch example --selector service=HTTP -o site.html   # fetch + verify to di
   the record's on-chain MiMC commitment, verifiable on-chain via `ZKVerifier`.
 - **Sybil resistance.** Because clients verify on-chain signatures and never trust a
   single resolver, running many fake resolvers gains an attacker nothing.
+- **Per-site browser isolation.** `/web/<name>` and `/resource` responses carry a
+  `Content-Security-Policy: sandbox` header (no `allow-same-origin`), so every
+  decentralized site gets its own opaque browser origin instead of sharing the
+  resolver's — otherwise one malicious name could read another's cookies, storage, or
+  hijack its service-worker scope, since they'd all sit under the same real origin.
 
 ## Development
 

@@ -50,6 +50,10 @@ func (s *Server) handleWeb(w http.ResponseWriter, r *http.Request) {
 	// Honour the on-chain declared type exactly; never let the browser re-sniff
 	// it into something the owner did not anchor.
 	h.Set("X-Content-Type-Options", "nosniff")
+	// Sandbox every served site into its own opaque origin (see webSandboxCSP):
+	// otherwise all decentralized names would share one real origin (this
+	// resolver's), breaking the cross-site isolation real DNS gives each domain.
+	h.Set("Content-Security-Policy", webSandboxCSP)
 	h.Set("X-DDNS-Owner", vr.owner)
 	h.Set("X-DDNS-SHA256", vr.sha)
 	h.Set("X-DDNS-Content-Validation", validationStatus(vr.validation.OK))

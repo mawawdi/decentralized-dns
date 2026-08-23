@@ -513,6 +513,12 @@ the file. Subsequent users hit the cache for one hour.
 - **Browser experience** — a `/web/<name>` gateway resolves, verifies, and renders a
   decentralized static site in any standard browser (visit `http://<resolver>/web/example`).
   The fuller `ddns://docs.example` protocol-handler/extension remains a nice-to-have.
+  Because `/web/<name>` is a path rather than a distinct hostname, every name served
+  through one resolver would otherwise share that resolver's real origin — unlike real
+  DNS, where each domain gets its own browser origin. The gateway closes that gap with a
+  `Content-Security-Policy: sandbox` response header (no `allow-same-origin`), which
+  forces each response into its own opaque origin even on a top-level navigation, so one
+  decentralized site can never reach another's cookies, storage, or service-worker scope.
 
 ### Setup
 
