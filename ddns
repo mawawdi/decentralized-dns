@@ -53,10 +53,12 @@ fi
 if [[ "$NETWORK" == "sepolia" ]]; then
   export DDNS_PRIVATE_KEY="${DDNS_PRIVATE_KEY:-${SEPOLIA_PRIVATE_KEY:-}}"
   export DDNS_DEPLOYMENTS="${DDNS_DEPLOYMENTS:-$ROOT/contracts/deployments/sepolia.json}"
+  export DEPLOYMENTS="$DDNS_DEPLOYMENTS"
   export RPC_URL="${RPC_URL:-${SEPOLIA_RPC_URL:-https://ethereum-sepolia-rpc.publicnode.com}}"
 else
   export DDNS_PRIVATE_KEY="${DDNS_PRIVATE_KEY:-0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d}"
   export DDNS_DEPLOYMENTS="${DDNS_DEPLOYMENTS:-$ROOT/contracts/deployments/localhost.json}"
+  export DEPLOYMENTS="$DDNS_DEPLOYMENTS"
   export RPC_URL="${RPC_URL:-http://127.0.0.1:8545}"
 fi
 
@@ -68,6 +70,9 @@ shift || true
 case "$cmd" in
   start|demo|presentation)
     exec "$ROOT/scripts/presentation.sh" "$@"
+    ;;
+  resolver|server|daemon)
+    exec "$BIN_DIR/resolver"
     ;;
   dashboard|admin)
     echo "Opening Resolver Admin Dashboard..."

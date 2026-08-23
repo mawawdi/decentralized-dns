@@ -46,7 +46,21 @@ func FromEnv() (*Config, error) {
 		EnforceType:     getEnvBool("ENFORCE_CONTENT_TYPE", false),
 	}
 	if cfg.ContractAddress == "" || cfg.RegistryAddress == "" {
-		ns, reg := loadDeployments(getEnv("DEPLOYMENTS", "../contracts/deployments/localhost.json"))
+		depPath := getEnv("DEPLOYMENTS", getEnv("DDNS_DEPLOYMENTS", ""))
+		if depPath == "" {
+			for _, candidate := range []string{
+				"contracts/deployments/localhost.json",
+				"../contracts/deployments/localhost.json",
+				"contracts/deployments/sepolia.json",
+				"../contracts/deployments/sepolia.json",
+			} {
+				if _, err := os.Stat(candidate); err == nil {
+					depPath = candidate
+					break
+				}
+			}
+		}
+		ns, reg := loadDeployments(depPath)
 		if cfg.ContractAddress == "" {
 			cfg.ContractAddress = ns
 		}
@@ -153,9 +167,19 @@ func loadDotEnv(path string) {
 // local resolver needs no manual address copying. Missing/invalid file yields
 // empty strings, leaving the caller's validation to report the problem.
 func loadDeployments(path string) (namespace, registry string) {
+	if path == "" {
+		return "", ""
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return "", ""
+		if strings.HasPrefix(path, "../") {
+			data, err = os.ReadFile(strings.TrimPrefix(path, "../"))
+		} else {
+			data, err = os.ReadFile("../" + path)
+		}
+		if err != nil {
+			return "", ""
+		}
 	}
 	var doc struct {
 		Contracts struct {
