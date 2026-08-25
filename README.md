@@ -37,7 +37,7 @@ and a one-command demo.
   (custom TLV framing) for low-latency lookups.
 - **Real systems engineering.** TTL + LRU caching with event-driven invalidation, RPC
   retry/back-off, per-IP rate limiting, graceful shutdown, and a concurrency-tested cache.
-- **Tested & reproducible.** 49 contract tests plus Go unit/concurrency tests (run under
+- **Tested & reproducible.** 55 contract tests plus Go unit/concurrency tests (run under
   `-race`), CI on every push, and `make demo` for a full local end-to-end run.
 
 ## Architecture
@@ -145,15 +145,21 @@ decentralized-dns/
 - **Node.js** 22+ (for the Hardhat contract workspace)
 - **make**
 
-### One-command demo
+### One-command demo / live presentation
 
+```bash
+make start
+```
+
+This boots a local Hardhat node, deploys and seeds the contracts, starts the Go
+resolver daemon, and seeds a decentralized website over BitTorrent. Query it at
+`http://localhost:8080/web/example` or access the admin console at
+`http://localhost:8080/admin`.
+
+For the automated end-to-end test script, run:
 ```bash
 make demo
 ```
-
-This boots a local Hardhat node, deploys the contracts, builds and starts the Go
-resolver, registers a sample domain, seeds a sample file, and runs an end-to-end query —
-the reproducible path for graders and first-time readers.
 
 ### Docker (full stack)
 
@@ -188,6 +194,13 @@ curl 'http://localhost:8080/resolve?name=example&type=A'
 
 ### Deploy to a public testnet (Sepolia)
 
+Save your `SEPOLIA_PRIVATE_KEY` and `SEPOLIA_RPC_URL` in `contracts/.env`, then run:
+
+```bash
+make deploy-sepolia        # writes contracts/deployments/sepolia.json
+```
+
+Or deploy manually:
 ```bash
 cd contracts
 export SEPOLIA_RPC_URL=https://… SEPOLIA_PRIVATE_KEY=0x…   # funded from a Sepolia faucet
@@ -195,8 +208,9 @@ npx hardhat run scripts/deploy.ts --network sepolia        # writes deployments/
 ```
 
 Point the resolver at it with `RPC_URL=$SEPOLIA_RPC_URL` and
-`DEPLOYMENTS=contracts/deployments/sepolia.json`. Unlike the gitignored localhost
-artifact, a public-testnet `deployments/sepolia.json` is safe to commit.
+`DEPLOYMENTS=contracts/deployments/sepolia.json` (or `./ddns resolver --sepolia`).
+Unlike the gitignored localhost artifact, a public-testnet `deployments/sepolia.json` is
+safe to commit.
 
 ## Resolver REST API
 
@@ -247,9 +261,11 @@ inside a TLV. See [`resolver/internal/server/udp.go`](./resolver/internal/server
 
 ### `ddns` — domain-owner CLI
 
-Signs every transaction locally with the owner's key (`--key` or `DDNS_PRIVATE_KEY`); the
-private key never leaves the machine and is never sent to a resolver. Contract addresses
-are read from `--deployments` (default `contracts/deployments/localhost.json`).
+Available as a root script (`./ddns`) or compiled binary (`resolver/bin/ddns`). Signs
+every transaction locally with the owner's key (`--key` or `DDNS_PRIVATE_KEY`); the
+private key never leaves the machine and is never sent to a resolver. Automatically
+loads `contracts/.env` and selects the active network. Contract addresses are read from
+`--deployments` (default `contracts/deployments/localhost.json`).
 
 ```bash
 ddns register example                                    # commit, wait ~30s, then reveal (pays the on-chain fee)
@@ -344,7 +360,9 @@ ddns-fetch example --selector service=HTTP -o site.html   # fetch + verify to di
 
 ```bash
 make build            # compile contracts + resolver
-make test             # hardhat tests + go vet + go test
+make test             # hardhat tests (55) + go vet + go test
+make start            # launch 1-click live demo stack (chain + resolver + web)
+make deploy-sepolia   # deploy contracts to public Sepolia testnet
 make race             # Go suite under the race detector (CI runs this)
 make cover            # resolver coverage report
 make fmt              # gofmt -w (CI fails on unformatted code)
