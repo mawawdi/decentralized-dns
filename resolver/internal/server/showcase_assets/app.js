@@ -854,6 +854,7 @@ async function setRecordFlow() {
       fn: async () => {
         const tx = await ns.setRecord(name, type, selector, fieldNames, fieldValues, ttl, sig, commitment);
         const rcpt = await tx.wait();
+        await fetch(`${REST_BASE}/showcase/api/invalidate?name=${encodeURIComponent(name)}`, { method: "POST" }).catch(() => {});
         return { state: "ok", detail: `${txLink(tx.hash)} (block ${rcpt.blockNumber})` };
       },
     },
@@ -1042,13 +1043,14 @@ async function publishFlow(tamper) {
         const tx = await ns.setRecord(name, "ResourceRef", selector,
           ["infoHash", "sha256", "contentType"], [infoHash, sha256, contentType], 3600, sig, commitment);
         const rcpt = await tx.wait();
+        await fetch(`${REST_BASE}/showcase/api/invalidate?name=${encodeURIComponent(name)}`, { method: "POST" }).catch(() => {});
         return { state: "ok", detail: `Anchored on-chain (${txLink(tx.hash)}, block ${rcpt.blockNumber})` };
       },
     },
     {
       title: "Step 3: Fetch via Resolver & Cryptographic Integrity Check",
       fn: async () => {
-        await sleep(500);
+        await sleep(600);
         const res = await fetch(`${REST_BASE}/resource?name=${encodeURIComponent(name)}&selector=${encodeURIComponent(selector)}`);
         const text = await res.text();
         if (tamper) {

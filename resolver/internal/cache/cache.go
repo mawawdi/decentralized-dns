@@ -139,6 +139,15 @@ func (c *TTLCache[V]) InvalidateNameHash(hash [32]byte) {
 	}
 }
 
+// Flush purges all entries and indexes from the cache.
+func (c *TTLCache[V]) Flush() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.lru.Purge()
+	c.nameKeys = map[string]map[Key]struct{}{}
+	c.hashNames = map[[32]byte]string{}
+}
+
 // HandleEvent applies a contract event to the cache (push invalidation).
 func (c *TTLCache[V]) HandleEvent(ev chain.RecordEvent) {
 	switch ev.Kind {

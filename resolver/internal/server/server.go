@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -77,6 +79,7 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger) (*Server, er
 	}
 
 	s := &Server{cfg: cfg, log: log, chain: chainClient, events: chainClient, cache: ttlCache, bt: bt, resource: bt, identity: identity, allowPeerHints: cfg.AllowPeerHints, enforceType: cfg.EnforceType, startTime: time.Now(), mux: http.NewServeMux()}
+	s.autoSeedUploads()
 	s.registerRoutes()
 	return s, nil
 }
@@ -177,4 +180,29 @@ func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = json.NewEncoder(w).Encode(map[string]any{"status": "ok", "chainHead": head})
+}
+
+func (s *Server) autoSeedUploads() {
+	if s.bt == nil {
+		return
+	}
+	uploadsDir := filepath.Join(s.cfg.DataDir, "uploads")
+	entries, err := os.ReadDir(uploadsDir)
+	if err != nil {
+		return
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
+		path := filepath.Join(uploadsDir, entry.Name())
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ih, sha, err := s.bt.SeedFile(ctx, path)
+		cancel()
+		if err != nil {
+			s.log.Debug("auto-seed error", "file", entry.Name(), "err", err)
+		} else {
+			s.log.Info("auto-seeded upload", "file", entry.Name(), "infoHash", ih, "sha256", sha)
+		}
+	}
 }

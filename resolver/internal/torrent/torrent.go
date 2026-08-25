@@ -275,7 +275,7 @@ func (e *Engine) Fetch(ctx context.Context, infoHashHex, expectedSHAHex string, 
 		e.release(ih)
 	}()
 	allPeers := append([]string{}, peers...)
-	allPeers = append(allPeers, "127.0.0.1:42100")
+	allPeers = append(allPeers, "127.0.0.1:42069")
 	for _, p := range allPeers {
 		host, portStr, err := net.SplitHostPort(p)
 		if err != nil {

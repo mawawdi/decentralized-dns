@@ -41,6 +41,7 @@ func (s *Server) registerShowcaseRoutes() {
 	s.mux.HandleFunc("GET /showcase/config", s.handleShowcaseConfig)
 	s.mux.HandleFunc("POST /showcase/api/commit", s.handleShowcaseCommit)
 	s.mux.HandleFunc("POST /showcase/api/publish", s.handleShowcasePublish)
+	s.mux.HandleFunc("POST /showcase/api/invalidate", s.handleShowcaseInvalidate)
 	s.mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})
@@ -153,5 +154,16 @@ func (s *Server) handleShowcasePublish(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadGateway, "seed_failed", err.Error())
 		return
 	}
+	s.cache.InvalidateName(req.Name)
 	writeJSON(w, http.StatusOK, publishResponse{InfoHash: infoHash, SHA256: sha})
+}
+
+func (s *Server) handleShowcaseInvalidate(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	if name != "" {
+		s.cache.InvalidateName(name)
+	} else {
+		s.cache.Flush()
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }

@@ -10,7 +10,6 @@ CONTRACTS="$ROOT/contracts"
 RESOLVER="$ROOT/resolver"
 DATA_DIR="$ROOT/data"
 REST="http://127.0.0.1:8080"
-PUBLISH_PORT=42100
 
 # Load .env if present
 if [ -f "$CONTRACTS/.env" ]; then
@@ -45,7 +44,6 @@ free_port() {
   fi
 }
 free_port 8080
-free_port 42100
 free_port 42069
 
 PIDS=()

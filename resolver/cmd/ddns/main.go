@@ -273,7 +273,7 @@ func cmdPublishResource(args []string) {
 	ttl := fs.Uint("ttl", 3600, "record TTL in seconds")
 	contentType := fs.String("content-type", "", "MIME type (default: detected from the file)")
 	dataDir := fs.String("data-dir", "", "torrent data dir (default: a temp dir)")
-	btPort := fs.Int("bt-port", 42100, "BitTorrent listen port (default: 42100)")
+	btPort := fs.Int("bt-port", 42069, "BitTorrent listen port (default: 42069)")
 	seconds := fs.Int("seconds", 0, "seed for N seconds then exit (0 = until interrupted)")
 	anchorOnly := fs.Bool("anchor-only", false, "submit the record without seeding")
 	_ = fs.Parse(reorder(args, "anchor-only"))
@@ -354,7 +354,7 @@ func cmdPublishResource(args []string) {
 
 func cmdSeed(args []string) {
 	fs := flag.NewFlagSet("seed", flag.ExitOnError)
-	btPort := fs.Int("bt-port", 42100, "BitTorrent listen port (default: 42100)")
+	btPort := fs.Int("bt-port", 42069, "BitTorrent listen port (default: 42069)")
 	dataDir := fs.String("data-dir", "", "torrent data dir")
 	_ = fs.Parse(reorder(args))
 	file := needArg(fs, 0, "file")
