@@ -45,8 +45,11 @@ demo:
 start:
 	./ddns start
 
-presentation:
-	./ddns start
+start-sepolia:
+	./ddns start --sepolia
+
+showcase:
+	./ddns showcase
 
 dashboard:
 	./ddns dashboard

@@ -27,6 +27,13 @@ type Config struct {
 	DataDir         string // scratch dir for torrent data
 	AllowPeerHints  bool   // honour client-supplied ?peer= hints on /resource
 	EnforceType     bool   // reject /resource bytes that mismatch the declared content type
+
+	// EnableShowcase mounts the interactive demo UI at /showcase (off by
+	// default: it exposes attack-simulation and write helper endpoints that
+	// must never be reachable on a resolver facing the real internet).
+	EnableShowcase            bool
+	ResolverRegistryAddress   string // optional, showcase-only
+	ResolverIncentivesAddress string // optional, showcase-only
 }
 
 // FromEnv builds a Config from the process environment, applying defaults
@@ -44,35 +51,49 @@ func FromEnv() (*Config, error) {
 		DataDir:         getEnv("DATA_DIR", "./data"),
 		AllowPeerHints:  getEnvBool("ALLOW_PEER_HINTS", false),
 		EnforceType:     getEnvBool("ENFORCE_CONTENT_TYPE", false),
+		EnableShowcase:  getEnvBool("ENABLE_SHOWCASE", false),
 	}
-	if cfg.ContractAddress == "" || cfg.RegistryAddress == "" {
+	if cfg.ContractAddress == "" || cfg.RegistryAddress == "" || cfg.EnableShowcase {
 		depPath := getEnv("DEPLOYMENTS", getEnv("DDNS_DEPLOYMENTS", ""))
 		if depPath == "" {
-			for _, candidate := range []string{
-				"contracts/deployments/localhost.json",
-				"../contracts/deployments/localhost.json",
-				"contracts/deployments/sepolia.json",
-				"../contracts/deployments/sepolia.json",
-			} {
+			var candidates []string
+			if strings.Contains(strings.ToLower(cfg.RPCURL), "sepolia") || os.Getenv("DDNS_NETWORK") == "sepolia" {
+				candidates = []string{
+					"contracts/deployments/sepolia.json",
+					"../contracts/deployments/sepolia.json",
+					"contracts/deployments/localhost.json",
+					"../contracts/deployments/localhost.json",
+				}
+			} else {
+				candidates = []string{
+					"contracts/deployments/localhost.json",
+					"../contracts/deployments/localhost.json",
+					"contracts/deployments/sepolia.json",
+					"../contracts/deployments/sepolia.json",
+				}
+			}
+			for _, candidate := range candidates {
 				if _, err := os.Stat(candidate); err == nil {
 					depPath = candidate
 					break
 				}
 			}
 		}
-		ns, reg := loadDeployments(depPath)
+		ns, reg, resReg, resInc := loadDeployments(depPath)
 		if cfg.ContractAddress == "" {
 			cfg.ContractAddress = ns
 		}
 		if cfg.RegistryAddress == "" {
 			cfg.RegistryAddress = reg
 		}
+		cfg.ResolverRegistryAddress = resReg
+		cfg.ResolverIncentivesAddress = resInc
 	}
 	var err error
 	if cfg.RESTPort, err = getEnvPort("REST_PORT", 8080); err != nil {
 		return nil, err
 	}
-	if cfg.UDPPort, err = getEnvPort("UDP_PORT", 5353); err != nil {
+	if cfg.UDPPort, err = getEnvPort("UDP_PORT", 5354); err != nil {
 		return nil, err
 	}
 	if cfg.BTListenPort, err = getEnvInt("BT_LISTEN_PORT", 42069); err != nil {
@@ -162,13 +183,13 @@ func loadDotEnv(path string) {
 	}
 }
 
-// loadDeployments reads the NamespaceDApp and RecordSchemaRegistry addresses
-// from a Hardhat deploy artifact (contracts/deployments/<network>.json), so a
-// local resolver needs no manual address copying. Missing/invalid file yields
-// empty strings, leaving the caller's validation to report the problem.
-func loadDeployments(path string) (namespace, registry string) {
+// loadDeployments reads the contract addresses from a deploy artifact
+// (contracts/deployments/<network>.json), so a local resolver needs no
+// manual address copying. Missing/invalid file yields empty strings, leaving
+// the caller's validation to report the problem.
+func loadDeployments(path string) (namespace, registry, resolverRegistry, resolverIncentives string) {
 	if path == "" {
-		return "", ""
+		return "", "", "", ""
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -178,19 +199,21 @@ func loadDeployments(path string) (namespace, registry string) {
 			data, err = os.ReadFile("../" + path)
 		}
 		if err != nil {
-			return "", ""
+			return "", "", "", ""
 		}
 	}
 	var doc struct {
 		Contracts struct {
 			NamespaceDApp        string `json:"NamespaceDApp"`
 			RecordSchemaRegistry string `json:"RecordSchemaRegistry"`
+			ResolverRegistry     string `json:"ResolverRegistry"`
+			ResolverIncentives   string `json:"ResolverIncentives"`
 		} `json:"contracts"`
 	}
 	if err := json.Unmarshal(data, &doc); err != nil {
-		return "", ""
+		return "", "", "", ""
 	}
-	return doc.Contracts.NamespaceDApp, doc.Contracts.RecordSchemaRegistry
+	return doc.Contracts.NamespaceDApp, doc.Contracts.RecordSchemaRegistry, doc.Contracts.ResolverRegistry, doc.Contracts.ResolverIncentives
 }
 
 func getEnvBool(key string, def bool) bool {

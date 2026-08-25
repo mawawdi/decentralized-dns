@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/chain/bindings"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain/bindings"
 )
 
 const (

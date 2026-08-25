@@ -37,6 +37,5 @@ keystore/
 .vscode/
 .idea/
 
-.presentation-data/
-
 *.html
+

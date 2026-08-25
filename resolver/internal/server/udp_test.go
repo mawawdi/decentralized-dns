@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/pki"
-	"github.com/devCana/decentralized-dns/resolver/internal/query"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/pki"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/query"
 )
 
 // startUDP boots the server's UDP listener on a random port and returns a

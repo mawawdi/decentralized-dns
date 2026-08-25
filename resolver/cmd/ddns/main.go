@@ -36,12 +36,12 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/chain"
-	"github.com/devCana/decentralized-dns/resolver/internal/chain/bindings"
-	"github.com/devCana/decentralized-dns/resolver/internal/pki"
-	"github.com/devCana/decentralized-dns/resolver/internal/query"
-	bttorrent "github.com/devCana/decentralized-dns/resolver/internal/torrent"
-	"github.com/devCana/decentralized-dns/resolver/internal/zk"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain/bindings"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/pki"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/query"
+	bttorrent "github.com/mawawdi/decentralized-dns/resolver/internal/torrent"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/zk"
 )
 
 func main() {

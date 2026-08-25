@@ -23,9 +23,9 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/chain"
-	"github.com/devCana/decentralized-dns/resolver/internal/pki"
-	"github.com/devCana/decentralized-dns/resolver/internal/zk"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/pki"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/zk"
 )
 
 func main() {

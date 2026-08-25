@@ -13,11 +13,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/cache"
-	"github.com/devCana/decentralized-dns/resolver/internal/chain"
-	"github.com/devCana/decentralized-dns/resolver/internal/config"
-	"github.com/devCana/decentralized-dns/resolver/internal/pki"
-	bttorrent "github.com/devCana/decentralized-dns/resolver/internal/torrent"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/cache"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/config"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/pki"
+	bttorrent "github.com/mawawdi/decentralized-dns/resolver/internal/torrent"
 )
 
 // eventPollInterval is how often the resolver polls the chain for record
@@ -95,6 +95,9 @@ func (s *Server) registerRoutes() {
 	// hammer the chain RPC, but no auth — bind it to a trusted network.
 	s.mux.HandleFunc("GET /admin", s.rateLimited(s.handleAdmin))
 	s.mux.HandleFunc("GET /admin/stats", s.rateLimited(s.handleAdminStats))
+	if s.cfg.EnableShowcase {
+		s.registerShowcaseRoutes()
+	}
 }
 
 // Chain exposes the blockchain reader to sibling subsystems.

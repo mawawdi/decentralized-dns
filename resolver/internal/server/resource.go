@@ -11,10 +11,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/contenttype"
-	"github.com/devCana/decentralized-dns/resolver/internal/pki"
-	"github.com/devCana/decentralized-dns/resolver/internal/query"
-	bttorrent "github.com/devCana/decentralized-dns/resolver/internal/torrent"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/contenttype"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/pki"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/query"
+	bttorrent "github.com/mawawdi/decentralized-dns/resolver/internal/torrent"
 )
 
 const resourceFetchTimeout = 10 * time.Second

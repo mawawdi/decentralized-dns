@@ -19,8 +19,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/chain/bindings"
-	"github.com/devCana/decentralized-dns/resolver/internal/pay"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain/bindings"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/pay"
 )
 
 // cmdChannelOpen opens a pay-per-query micropayment channel funding a resolver

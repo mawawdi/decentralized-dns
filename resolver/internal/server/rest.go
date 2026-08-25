@@ -10,8 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/chain"
-	"github.com/devCana/decentralized-dns/resolver/internal/query"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/query"
 )
 
 // chainCallTimeout bounds every chain read triggered by an HTTP request.

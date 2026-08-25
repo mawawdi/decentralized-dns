@@ -18,9 +18,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/chain"
-	"github.com/devCana/decentralized-dns/resolver/internal/pki"
-	"github.com/devCana/decentralized-dns/resolver/internal/zk"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/pki"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/zk"
 )
 
 type input struct {

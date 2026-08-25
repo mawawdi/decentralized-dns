@@ -14,7 +14,7 @@ func TestFromEnvDefaults(t *testing.T) {
 	if cfg.RPCURL != "http://127.0.0.1:8545" {
 		t.Errorf("RPCURL default = %q", cfg.RPCURL)
 	}
-	if cfg.RESTPort != 8080 || cfg.UDPPort != 5353 || cfg.BTListenPort != 42069 {
+	if cfg.RESTPort != 8080 || cfg.UDPPort != 5354 || cfg.BTListenPort != 42069 {
 		t.Errorf("port defaults = %d/%d/%d", cfg.RESTPort, cfg.UDPPort, cfg.BTListenPort)
 	}
 	if cfg.CacheSize != 4096 {
@@ -93,15 +93,15 @@ func TestLoadDotEnv(t *testing.T) {
 func TestLoadDeployments(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "localhost.json")
-	doc := `{"contracts":{"NamespaceDApp":"0xNS","RecordSchemaRegistry":"0xREG","ZKVerifier":"0xZK"}}`
+	doc := `{"contracts":{"NamespaceDApp":"0xNS","RecordSchemaRegistry":"0xREG","ResolverRegistry":"0xRESREG","ResolverIncentives":"0xRESINC","ZKVerifier":"0xZK"}}`
 	if err := os.WriteFile(path, []byte(doc), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	ns, reg := loadDeployments(path)
-	if ns != "0xNS" || reg != "0xREG" {
-		t.Errorf("loadDeployments = %q,%q want 0xNS,0xREG", ns, reg)
+	ns, reg, resReg, resInc := loadDeployments(path)
+	if ns != "0xNS" || reg != "0xREG" || resReg != "0xRESREG" || resInc != "0xRESINC" {
+		t.Errorf("loadDeployments = %q,%q,%q,%q want 0xNS,0xREG,0xRESREG,0xRESINC", ns, reg, resReg, resInc)
 	}
-	if ns, reg := loadDeployments(filepath.Join(dir, "missing.json")); ns != "" || reg != "" {
-		t.Errorf("missing file should yield empty, got %q,%q", ns, reg)
+	if ns, reg, resReg, resInc := loadDeployments(filepath.Join(dir, "missing.json")); ns != "" || reg != "" || resReg != "" || resInc != "" {
+		t.Errorf("missing file should yield empty, got %q,%q,%q,%q", ns, reg, resReg, resInc)
 	}
 }

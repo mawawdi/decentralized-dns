@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/query"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/query"
 )
 
 const (

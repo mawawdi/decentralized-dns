@@ -11,8 +11,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/config"
-	"github.com/devCana/decentralized-dns/resolver/internal/server"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/config"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/server"
 )
 
 func main() {

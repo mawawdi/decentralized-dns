@@ -12,12 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/cache"
-	"github.com/devCana/decentralized-dns/resolver/internal/chain"
-	"github.com/devCana/decentralized-dns/resolver/internal/config"
-	"github.com/devCana/decentralized-dns/resolver/internal/pki"
-	bttorrent "github.com/devCana/decentralized-dns/resolver/internal/torrent"
-	"github.com/devCana/decentralized-dns/resolver/internal/zk"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/cache"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/config"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/pki"
+	bttorrent "github.com/mawawdi/decentralized-dns/resolver/internal/torrent"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/zk"
 )
 
 // fakeChain is an in-memory ChainReader for handler tests.

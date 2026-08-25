@@ -1,4 +1,4 @@
-module github.com/devCana/decentralized-dns/resolver
+module github.com/mawawdi/decentralized-dns/resolver
 
 go 1.25.7
 

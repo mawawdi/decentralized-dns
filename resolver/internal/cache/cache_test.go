@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/chain"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain"
 )
 
 func newTestCache(t *testing.T, capacity int) (*TTLCache[string], *time.Time) {

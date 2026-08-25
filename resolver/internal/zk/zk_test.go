@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/chain"
-	"github.com/devCana/decentralized-dns/resolver/internal/pki"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/pki"
 )
 
 func testMessage() []byte {

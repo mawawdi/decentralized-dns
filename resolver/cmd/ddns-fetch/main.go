@@ -19,9 +19,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/contenttype"
-	"github.com/devCana/decentralized-dns/resolver/internal/pki"
-	"github.com/devCana/decentralized-dns/resolver/internal/query"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/contenttype"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/pki"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/query"
 )
 
 const maxResourceBytes = 256 << 20 // mirror the resolver's MaxFetchBytes

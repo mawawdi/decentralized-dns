@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/cache"
-	bttorrent "github.com/devCana/decentralized-dns/resolver/internal/torrent"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/cache"
+	bttorrent "github.com/mawawdi/decentralized-dns/resolver/internal/torrent"
 )
 
 // adminStats is the operator console snapshot (HLD §4.3): resolver identity,

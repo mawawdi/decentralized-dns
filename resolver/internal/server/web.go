@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/query"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/query"
 )
 
 // handleWeb is the decentralized-web gateway (HLD "Optional browser

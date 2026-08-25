@@ -41,6 +41,17 @@ var ErrTooLarge = errors.New("torrent: resource exceeds maximum fetch size")
 // locally; the oldest is dropped past this cap.
 const maxRetainedTorrents = 256
 
+// PublicOpenTrackers provides standard, high-reliability global BitTorrent trackers
+// for worldwide peer discovery across the open internet.
+var PublicOpenTrackers = [][]string{
+	{"udp://tracker.opentrackr.org:1337/announce"},
+	{"udp://open.stealth.si:80/announce"},
+	{"udp://tracker.torrent.eu.org:451/announce"},
+	{"udp://tracker.moeking.me:6969/announce"},
+	{"udp://explodie.org:6969/announce"},
+	{"http://tracker.opentrackr.org:1337/announce"},
+}
+
 // Config tunes an Engine.
 type Config struct {
 	DataDir    string       // where seeded/fetched payloads live
@@ -206,7 +217,10 @@ func (e *Engine) SeedFile(ctx context.Context, path string) (infoHash, sha strin
 	if err != nil {
 		return "", "", err
 	}
-	mi := &metainfo.MetaInfo{InfoBytes: infoBytes}
+	mi := &metainfo.MetaInfo{
+		InfoBytes:    infoBytes,
+		AnnounceList: PublicOpenTrackers,
+	}
 	ih := mi.HashInfoBytes()
 	t, _ := e.client.AddTorrentOpt(torrent.AddTorrentOpts{
 		InfoHash:  ih,
@@ -218,6 +232,7 @@ func (e *Engine) SeedFile(ctx context.Context, path string) (infoHash, sha strin
 			},
 		}),
 	})
+	t.AddTrackers(PublicOpenTrackers)
 	select {
 	case <-t.GotInfo():
 	case <-ctx.Done():
@@ -247,6 +262,7 @@ func (e *Engine) Fetch(ctx context.Context, infoHashHex, expectedSHAHex string, 
 	}
 
 	t, _ := e.client.AddTorrentInfoHash(ih)
+	t.AddTrackers(PublicOpenTrackers)
 	// Reference-count this reader so a concurrent fetch of the same infohash (or
 	// an LRU eviction) can never Drop the torrent out from under us. release()
 	// drops it only when this was the last reader and it isn't pinned/retained.

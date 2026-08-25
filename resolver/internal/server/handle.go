@@ -6,11 +6,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/cache"
-	"github.com/devCana/decentralized-dns/resolver/internal/chain"
-	"github.com/devCana/decentralized-dns/resolver/internal/pki"
-	"github.com/devCana/decentralized-dns/resolver/internal/query"
-	"github.com/devCana/decentralized-dns/resolver/internal/zk"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/cache"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/pki"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/query"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/zk"
 )
 
 // ChainReader is the read-only chain surface the query path depends on.

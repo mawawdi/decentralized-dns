@@ -6,7 +6,7 @@ package chain
 import (
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/chain/bindings"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain/bindings"
 )
 
 // Record is the resolver-level view of an on-chain record.

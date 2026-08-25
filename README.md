@@ -4,7 +4,7 @@
 > no certificate authorities. Namespaces live on-chain, large static content lives on
 > BitTorrent, and every answer is cryptographically verifiable end-to-end.
 
-[![CI](https://github.com/devCana/decentralized-dns/actions/workflows/ci.yml/badge.svg)](https://github.com/devCana/decentralized-dns/actions/workflows/ci.yml)
+[![CI](https://github.com/mawawdi/decentralized-dns/actions/workflows/ci.yml/badge.svg)](https://github.com/mawawdi/decentralized-dns/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Go 1.25+](https://img.shields.io/badge/Go-1.25%2B-00ADD8.svg)](https://go.dev/)
 [![Solidity ^0.8.28](https://img.shields.io/badge/Solidity-%5E0.8.28-363636.svg)](https://soliditylang.org/)
@@ -33,7 +33,7 @@ and a one-command demo.
 - **Content-addressed P2P storage.** Large files live on BitTorrent; the resolver re-hashes
   every payload (SHA-256) against the chain before serving, so a tampered file can never
   reach a client.
-- **Two front ends.** A JSON REST API *and* a hand-rolled compact **binary UDP protocol**
+- **Two front ends.** A JSON REST API _and_ a hand-rolled compact **binary UDP protocol**
   (custom TLV framing) for low-latency lookups.
 - **Real systems engineering.** TTL + LRU caching with event-driven invalidation, RPC
   retry/back-off, per-IP rate limiting, graceful shutdown, and a concurrency-tested cache.
@@ -77,27 +77,27 @@ including sequence diagrams for registration, cache hit/miss, and resource fetch
 
 ## Features
 
-| Feature | Status | Notes |
-|---|---|---|
-| Decentralized namespace registration / renewal / transfer | ✅ | Length-based pricing, 1-year periods, on-chain fee collection |
-| Typed record store with schema validation | ✅ | Mandatory/optional fields enforced on-chain (`RecordSchemaRegistry`) |
-| Dynamic record-type expansion | ✅ | New record types declared permissionlessly (UC-9) |
-| Extended query selectors (port / transport / service) | ✅ | `?selector=service=HTTP&transport=TCP&port=443` |
-| TTL caching resolver with event-driven invalidation | ✅ | LRU + per-record TTL; chain events evict stale entries |
-| Owner-signature (PKI) verification | ✅ | secp256k1 EIP-191 signatures recovered to the on-chain pubkey |
-| Resolver-identity response signatures | ✅ | Every REST/UDP answer sealed in an ed25519 envelope |
-| Zero-knowledge record-commitment proofs | ✅ | gnark MiMC circuit, Groth16, on-chain `ZKVerifier` |
-| BitTorrent `ResourceRef` storage with hash verification | ✅ | Tampered files are discarded, never served |
-| Resource type validation (secondary) | ✅ | Local content sniffing; advisory by default, strict via `ENFORCE_CONTENT_TYPE`; re-checked trustlessly in `ddns-fetch` |
-| REST query API | ✅ | `/resolve`, `/resource`, `/web/{name}`, `/domains/{name}`, `/types`, `/healthz` |
-| UDP query API (secondary) | ✅ | Compact binary TLV wire format |
-| Operator console | ✅ | `/admin` dashboard + `/admin/stats` JSON (cache, chain head, swarm health, identity) |
-| Browser gateway | ✅ | `/web/{name}` renders a verified decentralized site in any browser |
-| On-chain resolver discovery | ✅ | `ResolverRegistry` + `ddns-lookup --discover` (bootstrap with no legacy DNS) |
-| Owner CLI + lookup/fetch client tools | ✅ | `ddns`, `ddns-lookup`, `ddns-fetch` |
-| Containerized deployment | ✅ | Static `CGO_ENABLED=0` image; `docker compose up` for the full stack |
-| Resolver incentives (pay-per-query) | ✅ | `ResolverIncentives` micropayment channels — exploit-resistant by construction ([model](./docs/incentives.md)) |
-| Browser integration | ✅ | `/web` gateway + a Manifest V3 extension (omnibox `ddns <name>` + in-browser envelope verification) |
+| Feature                                                   | Status | Notes                                                                                                                  |
+| --------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Decentralized namespace registration / renewal / transfer | ✅     | Length-based pricing, 1-year periods, on-chain fee collection                                                          |
+| Typed record store with schema validation                 | ✅     | Mandatory/optional fields enforced on-chain (`RecordSchemaRegistry`)                                                   |
+| Dynamic record-type expansion                             | ✅     | New record types declared permissionlessly (UC-9)                                                                      |
+| Extended query selectors (port / transport / service)     | ✅     | `?selector=service=HTTP&transport=TCP&port=443`                                                                        |
+| TTL caching resolver with event-driven invalidation       | ✅     | LRU + per-record TTL; chain events evict stale entries                                                                 |
+| Owner-signature (PKI) verification                        | ✅     | secp256k1 EIP-191 signatures recovered to the on-chain pubkey                                                          |
+| Resolver-identity response signatures                     | ✅     | Every REST/UDP answer sealed in an ed25519 envelope                                                                    |
+| Zero-knowledge record-commitment proofs                   | ✅     | gnark MiMC circuit, Groth16, on-chain `ZKVerifier`                                                                     |
+| BitTorrent `ResourceRef` storage with hash verification   | ✅     | Tampered files are discarded, never served                                                                             |
+| Resource type validation (secondary)                      | ✅     | Local content sniffing; advisory by default, strict via `ENFORCE_CONTENT_TYPE`; re-checked trustlessly in `ddns-fetch` |
+| REST query API                                            | ✅     | `/resolve`, `/resource`, `/web/{name}`, `/domains/{name}`, `/types`, `/healthz`                                        |
+| UDP query API (secondary)                                 | ✅     | Compact binary TLV wire format                                                                                         |
+| Operator console                                          | ✅     | `/admin` dashboard + `/admin/stats` JSON (cache, chain head, swarm health, identity)                                   |
+| Browser gateway                                           | ✅     | `/web/{name}` renders a verified decentralized site in any browser                                                     |
+| On-chain resolver discovery                               | ✅     | `ResolverRegistry` + `ddns-lookup --discover` (bootstrap with no legacy DNS)                                           |
+| Owner CLI + lookup/fetch client tools                     | ✅     | `ddns`, `ddns-lookup`, `ddns-fetch`                                                                                    |
+| Containerized deployment                                  | ✅     | Static `CGO_ENABLED=0` image; `docker compose up` for the full stack                                                   |
+| Resolver incentives (pay-per-query)                       | ✅     | `ResolverIncentives` micropayment channels — exploit-resistant by construction ([model](./docs/incentives.md))         |
+| Browser integration                                       | ✅     | `/web` gateway + a Manifest V3 extension (omnibox `ddns <name>` + in-browser envelope verification)                    |
 
 ## Repository layout
 
@@ -157,6 +157,7 @@ resolver daemon, and seeds a decentralized website over BitTorrent. Query it at
 `http://localhost:8080/admin`.
 
 For the automated end-to-end test script, run:
+
 ```bash
 make demo
 ```
@@ -201,6 +202,7 @@ make deploy-sepolia        # writes contracts/deployments/sepolia.json
 ```
 
 Or deploy manually:
+
 ```bash
 cd contracts
 export SEPOLIA_RPC_URL=https://… SEPOLIA_PRIVATE_KEY=0x…   # funded from a Sepolia faucet
@@ -218,15 +220,15 @@ All successful responses are wrapped in a resolver-signed ed25519 envelope so cl
 authenticate the resolver. Binary fields are `0x`-hex so signatures and commitments can be
 re-verified byte-exactly.
 
-| Method & path | Purpose |
-|---|---|
-| `GET /healthz` | Liveness + current chain head (exempt from rate limiting) |
-| `GET /resolve?name=&type=&selector=&port=&transport=&service=` | Resolve a single record (UC-4/UC-5) |
-| `GET /resource?name=&selector=&peer=` | Resolve a `ResourceRef` and stream the verified file bytes (UC-6) |
-| `GET /web/{name}?selector=` | Render a verified decentralized site in any browser (defaults to `service=HTTP`) |
-| `GET /domains/{name}` | Raw domain state + all live records |
-| `GET /types` | All declared record types |
-| `GET /admin`, `GET /admin/stats` | Operator console (HTML dashboard + JSON): cache, chain head, swarm health, identity |
+| Method & path                                                  | Purpose                                                                             |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `GET /healthz`                                                 | Liveness + current chain head (exempt from rate limiting)                           |
+| `GET /resolve?name=&type=&selector=&port=&transport=&service=` | Resolve a single record (UC-4/UC-5)                                                 |
+| `GET /resource?name=&selector=&peer=`                          | Resolve a `ResourceRef` and stream the verified file bytes (UC-6)                   |
+| `GET /web/{name}?selector=`                                    | Render a verified decentralized site in any browser (defaults to `service=HTTP`)    |
+| `GET /domains/{name}`                                          | Raw domain state + all live records                                                 |
+| `GET /types`                                                   | All declared record types                                                           |
+| `GET /admin`, `GET /admin/stats`                               | Operator console (HTML dashboard + JSON): cache, chain head, swarm health, identity |
 
 **Example**
 
@@ -321,7 +323,7 @@ ddns-fetch example --selector service=HTTP -o site.html   # fetch + verify to di
 ## Smart contracts
 
 - **`NamespaceDApp`** — the on-chain authority. Domains keyed by `keccak256(name)` store
-  owner address, public key, expiry, and a *generation* counter that logically
+  owner address, public key, expiry, and a _generation_ counter that logically
   invalidates records left behind by a previous owner. Enforces length-based pricing,
   single-owner access control, schema-validated record writes, and CEI-pattern fee
   refunds. Emits `Registered` / `Renewed` / `Transferred` / `RecordSet` / `RecordRemoved`

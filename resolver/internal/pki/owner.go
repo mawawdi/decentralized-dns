@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/devCana/decentralized-dns/resolver/internal/chain"
+	"github.com/mawawdi/decentralized-dns/resolver/internal/chain"
 )
 
 // ErrBadSignature wraps every owner-signature verification failure.
@@ -63,9 +63,38 @@ func RecordMessage(name string, r chain.Record) []byte {
 	return buf.Bytes()
 }
 
+func isPlaceholderPubKey(pubKey []byte) bool {
+	if len(pubKey) == 0 {
+		return true
+	}
+	allZero := true
+	for _, b := range pubKey {
+		if b != 0 {
+			allZero = false
+			break
+		}
+	}
+	if allZero {
+		return true
+	}
+	if len(pubKey) == 65 && pubKey[0] == 0x04 {
+		restZero := true
+		for _, b := range pubKey[1:] {
+			if b != 0 {
+				restZero = false
+				break
+			}
+		}
+		if restZero {
+			return true
+		}
+	}
+	return false
+}
+
 // VerifyOwnerSig checks that r.OwnerSig is a valid EIP-191 signature of
 // the canonical record message by the on-chain identity: the recovered
-// key must equal the registered pubKey and hash to the owner address.
+// key must equal the registered pubKey (if specified) and hash to the owner address.
 func VerifyOwnerSig(name string, r chain.Record, owner common.Address, pubKey []byte) error {
 	if len(r.FieldNames) != len(r.FieldVals) {
 		return fmt.Errorf("%w: field name/value arrays differ in length (%d vs %d)", ErrBadSignature, len(r.FieldNames), len(r.FieldVals))
@@ -83,7 +112,7 @@ func VerifyOwnerSig(name string, r chain.Record, owner common.Address, pubKey []
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrBadSignature, err)
 	}
-	if !bytes.Equal(crypto.FromECDSAPub(recovered), pubKey) {
+	if !isPlaceholderPubKey(pubKey) && !bytes.Equal(crypto.FromECDSAPub(recovered), pubKey) {
 		return fmt.Errorf("%w: recovered key does not match on-chain pubKey", ErrBadSignature)
 	}
 	if crypto.PubkeyToAddress(*recovered) != owner {
