@@ -17,7 +17,7 @@ import (
 	bttorrent "github.com/devCana/decentralized-dns/resolver/internal/torrent"
 )
 
-const resourceFetchTimeout = 60 * time.Second
+const resourceFetchTimeout = 10 * time.Second
 
 // webSandboxCSP is applied to every response that carries owner-controlled
 // bytes onto the browser (/web and /resource). Without it, every

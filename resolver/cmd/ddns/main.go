@@ -65,6 +65,8 @@ func main() {
 		cmdDeclareType(args)
 	case "publish-resource":
 		cmdPublishResource(args)
+	case "seed":
+		cmdSeed(args)
 	case "announce-resolver":
 		cmdAnnounceResolver(args)
 	case "resolvers":
@@ -271,7 +273,7 @@ func cmdPublishResource(args []string) {
 	ttl := fs.Uint("ttl", 3600, "record TTL in seconds")
 	contentType := fs.String("content-type", "", "MIME type (default: detected from the file)")
 	dataDir := fs.String("data-dir", "", "torrent data dir (default: a temp dir)")
-	btPort := fs.Int("bt-port", 0, "BitTorrent listen port (0 = random)")
+	btPort := fs.Int("bt-port", 42100, "BitTorrent listen port (default: 42100)")
 	seconds := fs.Int("seconds", 0, "seed for N seconds then exit (0 = until interrupted)")
 	anchorOnly := fs.Bool("anchor-only", false, "submit the record without seeding")
 	_ = fs.Parse(reorder(args, "anchor-only"))
@@ -348,6 +350,34 @@ func cmdPublishResource(args []string) {
 	sig2 := make(chan os.Signal, 1)
 	signal.Notify(sig2, os.Interrupt, syscall.SIGTERM)
 	<-sig2
+}
+
+func cmdSeed(args []string) {
+	fs := flag.NewFlagSet("seed", flag.ExitOnError)
+	btPort := fs.Int("bt-port", 42100, "BitTorrent listen port (default: 42100)")
+	dataDir := fs.String("data-dir", "", "torrent data dir")
+	_ = fs.Parse(reorder(args))
+	file := needArg(fs, 0, "file")
+
+	dir := *dataDir
+	if dir == "" {
+		var err error
+		dir, err = os.MkdirTemp("", "ddns-seed-*")
+		fatal(err)
+	}
+	engine, err := bttorrent.New(bttorrent.Config{DataDir: dir, ListenPort: *btPort, DisableDHT: false})
+	fatal(err)
+	defer engine.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	infoHash, sha, err := engine.SeedFile(ctx, file)
+	cancel()
+	fatal(err)
+	fmt.Printf("seeding %s (infoHash=%s, sha256=%s) on port %d without blockchain transactions...\n", file, infoHash, sha, *btPort)
+	fmt.Println("press Ctrl-C to stop seeding.")
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+	<-sig
 }
 
 // cmdWithdraw lets the treasurer (the deployer) sweep collected registration

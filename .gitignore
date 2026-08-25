@@ -15,6 +15,10 @@ resolver/dist/
 resolver/coverage.out
 resolver/coverage.filtered
 resolver/data/
+data/
+**/.torrent.db*
+*.db-shm
+*.db-wal
 # stray binaries from `go build ./cmd/<x>` run inside resolver/
 /resolver/resolver
 /resolver/ddns

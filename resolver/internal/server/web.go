@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/devCana/decentralized-dns/resolver/internal/query"
@@ -68,9 +67,7 @@ func (s *Server) handleWeb(w http.ResponseWriter, r *http.Request) {
 	h.Set("X-DDNS-Owner", vr.owner)
 	h.Set("X-DDNS-SHA256", vr.sha)
 	h.Set("X-DDNS-Content-Validation", validationStatus(vr.validation.OK))
-	if vr.ttl > 0 {
-		h.Set("Cache-Control", fmt.Sprintf("public, max-age=%d", vr.ttl))
-	}
+	h.Set("Cache-Control", "no-cache, must-revalidate")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(vr.body)
 }

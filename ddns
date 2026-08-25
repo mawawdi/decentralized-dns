@@ -107,7 +107,7 @@ case "$cmd" in
     done
     exec "$BIN_DIR/ddns" set "$NAME" "$TYPE" "${ARGS[@]}"
     ;;
-  register|remove|transfer|renew|declare-type|publish-resource|announce-resolver|resolvers|channel-open|voucher|channel-claim|channel-close|withdraw)
+  register|remove|transfer|renew|declare-type|publish-resource|seed|announce-resolver|resolvers|channel-open|voucher|channel-claim|channel-close|withdraw)
     exec "$BIN_DIR/ddns" "$cmd" "$@"
     ;;
   help|-h|--help)
