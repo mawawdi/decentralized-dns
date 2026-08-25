@@ -40,26 +40,6 @@ and a one-command demo.
 - **Tested & reproducible.** 49 contract tests plus Go unit/concurrency tests (run under
   `-race`), CI on every push, and `make demo` for a full local end-to-end run.
 
-## Demo
-
-```console
-$ make demo   # boots a local chain, deploys + seeds, starts the resolver, drives the CLIs
-
-== resolve a record and verify it end-to-end (ddns-lookup) ==
-resolver:  0x055b…470f (envelope signature OK)
-owner:     0x7099…79C8
-record:    A address=93.184.216.34 (ttl=3600s)
-owner sig: OK (recovered to on-chain pubKey + owner address)
-zk proof:  OK (Groth16 commitment proof verifies)
-
-== publish a static file, then fetch it back over BitTorrent ==
-seeded site.html: infoHash=f726b029… sha256=7cd536fc… contentType=text/html
-ddns-fetch: wrote 67 verified bytes to site.html   (SHA-256 + resolver provenance OK)
-```
-
-Every line above is checked by the client itself — the resolver's identity signature, the
-domain owner's record signature, the zero-knowledge proof, and the file's SHA-256.
-
 ## Architecture
 
 ```mermaid
