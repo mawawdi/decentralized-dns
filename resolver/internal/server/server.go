@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -69,7 +70,7 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger) (*Server, er
 		return nil, fmt.Errorf("resolver identity: %w", err)
 	}
 	log.Info("resolver identity", "pubKey", identity.PublicKeyHex())
-	bt, err := bttorrent.New(bttorrent.Config{DataDir: cfg.DataDir, ListenPort: cfg.BTListenPort, Logger: log})
+	bt, err := bttorrent.New(bttorrent.Config{DataDir: filepath.Join(cfg.DataDir, "torrent"), ListenPort: cfg.BTListenPort, Logger: log})
 	if err != nil {
 		chainClient.Close()
 		return nil, err

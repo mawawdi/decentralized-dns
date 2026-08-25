@@ -30,7 +30,7 @@ for arg in "$@" "${DDNS_NETWORK:-}"; do
   fi
 done
 
-mkdir -p "$DATA_DIR/bin" "$DATA_DIR/uploads" "$DATA_DIR/resolver"
+mkdir -p "$DATA_DIR/bin" "$DATA_DIR/keys" "$DATA_DIR/logs" "$DATA_DIR/torrent" "$DATA_DIR/uploads"
 
 # Free ports
 free_port() {
@@ -102,9 +102,9 @@ if [ "$NETWORK" == "sepolia" ]; then
 
   step "3. Starting Resolver daemon on Sepolia..."
   RPC_URL="$RPC_URL" CONTRACT_ADDRESS="$NAMESPACE" REGISTRY_ADDRESS="$REGISTRY" \
-    RESOLVER_KEYSTORE="$DATA_DIR/resolver.key" DATA_DIR="$DATA_DIR/resolver" ALLOW_PEER_HINTS=true \
+    RESOLVER_KEYSTORE="$DATA_DIR/keys/resolver.key" DATA_DIR="$DATA_DIR" ALLOW_PEER_HINTS=true \
     DEPLOYMENTS="$DEPLOYMENTS" ENABLE_SHOWCASE=true DDNS_NETWORK="sepolia" \
-    "$DATA_DIR/bin/resolver" >"$DATA_DIR/resolver.log" 2>&1 &
+    "$DATA_DIR/bin/resolver" >"$DATA_DIR/logs/resolver.log" 2>&1 &
   PIDS+=($!)
   wait_for "$REST/healthz" "resolver"
 
@@ -115,7 +115,7 @@ else
 
   step "2. Starting local blockchain (Hardhat)..."
   free_port 8545
-  ( cd "$CONTRACTS" && npx hardhat node --hostname 127.0.0.1 >"$DATA_DIR/chain.log" 2>&1 ) &
+  ( cd "$CONTRACTS" && npx hardhat node --hostname 127.0.0.1 >"$DATA_DIR/logs/chain.log" 2>&1 ) &
   PIDS+=($!)
   wait_rpc "$RPC_URL"
 
@@ -128,9 +128,9 @@ else
 
   step "4. Starting Resolver daemon on Localhost..."
   RPC_URL="$RPC_URL" CONTRACT_ADDRESS="$NAMESPACE" REGISTRY_ADDRESS="$REGISTRY" \
-    RESOLVER_KEYSTORE="$DATA_DIR/resolver.key" DATA_DIR="$DATA_DIR/resolver" ALLOW_PEER_HINTS=true \
+    RESOLVER_KEYSTORE="$DATA_DIR/keys/resolver.key" DATA_DIR="$DATA_DIR" ALLOW_PEER_HINTS=true \
     DEPLOYMENTS="$DEPLOYMENTS" ENABLE_SHOWCASE=true \
-    "$DATA_DIR/bin/resolver" >"$DATA_DIR/resolver.log" 2>&1 &
+    "$DATA_DIR/bin/resolver" >"$DATA_DIR/logs/resolver.log" 2>&1 &
   PIDS+=($!)
   wait_for "$REST/healthz" "resolver"
 
